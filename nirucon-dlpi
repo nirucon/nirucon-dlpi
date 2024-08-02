@@ -361,11 +361,28 @@ export GTK4_SETTINGS="$HOME/.config/gtk-4.0/settings.ini"' ~/.xinitrc
     fi
 }
 
+# Final additions
+echo "Now some final installations, we are soon done..."
+
+# Function: Check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
 # Function: Install Fastfetch
 install_fastfetch() {
+    # Check if Fastfetch is already installed
+    if command_exists fastfetch; then
+        echo "Fastfetch is already installed."
+        return
+    fi
+
+    # Print info
+    echo "Cloning and installing fastfetch..."
+
     # Install dependencies
-    sudo apt update
-    sudo apt install -y cmake gcc pkg-config git
+    sudo apt-get update
+    sudo apt-get install -y cmake gcc pkg-config
 
     # Clone Fastfetch repository
     git clone https://github.com/fastfetch-cli/fastfetch.git
@@ -381,12 +398,24 @@ install_fastfetch() {
     # Cleanup
     cd ../..
     rm -rf fastfetch
+
+    echo "Fastfetch installed successfully!"
 }
 
 # Function: Install Mononoki Nerd Font
 install_mononoki() {
+    # Check if Mononoki Nerd Font is already installed
+    if fc-list | grep -i mononoki >/dev/null 2>&1; then
+        echo "Mononoki Nerd Font is already installed."
+        return
+    fi
+
+    # Print info
+    echo "Installing mononoki font..."
+
     # Install fontconfig if not already installed
-    sudo apt install -y fontconfig
+    sudo apt-get update
+    sudo apt-get install -y fontconfig unzip
 
     # Create the fonts directory if it doesn't exist
     mkdir -p ~/.local/share/fonts
