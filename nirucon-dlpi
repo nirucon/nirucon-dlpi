@@ -55,7 +55,7 @@ optimize_system_conf() {
 # Function: Install essential packages via apt
 install_packages() {
     local packages=(
-        xorg xinit xserver-utils fonts-noto fonts-noto-color-emoji playerctl
+        xorg xinit x11-xserver-utils fonts-noto fonts-noto-color-emoji playerctl
         qt6ct breeze-icon-theme pcmanfm arandr nitrogen picom openssh-client cmus scrot gnupg
         pass brightnessctl mpv dunst unzip nano alsa-utils pavucontrol xarchiver xclip htop curl
         libnotify-bin jq bc build-essential libx11-dev libxinerama-dev libxft-dev libfreetype6-dev libpam0g-dev libxext-dev
