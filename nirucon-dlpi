@@ -152,7 +152,7 @@ install_suckless() {
         mkdir -p ~/Git && git clone https://github.com/nirucon/nirucon-suckless ~/Git/nirucon-suckless
         mkdir -p ~/.config/suckless ~/.dwm ~/Music ~/Downloads ~/Pictures ~/Videos ~/Temp ~/.config/dunst
 
-        declare -a repos=("nirubar-dwm-void" "dunstrc" "nirucon-dmenu" "sverigesradio-dmenu" "srpod-dmenu" "srplay-dmenu" "dwmexit-dmenu" "havamal" "wifi-dmenu" "system-optimizer-dmenu")
+        declare -a repos=("nirubar-dwm-deb" "dunstrc" "nirucon-dmenu" "sverigesradio-dmenu" "srpod-dmenu" "srplay-dmenu" "dwmexit-dmenu" "havamal" "wifi-dmenu" "system-optimizer-dmenu")
         for repo in "${repos[@]}"; do
             rm -rf ~/Git/$repo
             git clone https://github.com/nirucon/$repo ~/Git/$repo
@@ -173,10 +173,10 @@ install_suckless() {
         cp -f ~/Git/nirucon-suckless/.bash_aliases_debian ~/
         cp -rf ~/Git/nirucon-suckless/nirucon-wallpapers ~/Pictures/
         sudo cp -f ~/Git/nirucon-suckless/issue /etc/
-        chmod +x ~/.dwm/autostart.sh ~/.config/suckless/nirubar-dwm-void/nirubar-dwm-void ~/.config/nirucon-greeter/greeter
+        chmod +x ~/.dwm/autostart.sh ~/.config/suckless/nirubar-dwm-deb/nirubar-dwm-deb ~/.config/nirucon-greeter/greeter
 
         # Insert nirubar-dwm in .xinitrc
-        line_to_insert="~/.config/suckless/nirubar-dwm-void/nirubar-dwm-void &"
+        line_to_insert="~/.config/suckless/nirubar-dwm-deb/nirubar-dwm-deb &"
         comment_line="# Start nirubar-dwm-*"
         if [[ -f ~/.xinitrc ]]; then
           sed -i "/$comment_line/a $line_to_insert" ~/.xinitrc
@@ -490,7 +490,7 @@ main() {
     install_mononoki
 
     echo "Cleaning up temporary files..."
-    rm -fr ~/Git/dunstrc ~/Git/nirubar-dwm ~/Git/nirucon-suckless ~/Git/nirucon-death-grubtheme
+    rm -fr ~/Git/dunstrc ~/Git/nirubar-dwm-deb ~/Git/nirucon-suckless ~/Git/nirucon-death-grubtheme
     echo "NIRUCON-DLPI Debian-based Post Install script completed - NOW BE CREATIVE!"
     echo "Start nirucon-suckless with the command: startx"
 }
