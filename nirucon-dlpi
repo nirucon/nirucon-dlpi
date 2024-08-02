@@ -18,11 +18,10 @@ check_internet_connection() {
 
 # Function: Display welcome message
 display_welcome() {
-    echo -e "       _\n _ __ (_)_ __ _   _  ___ ___  _ ___\n| '_ \\| | '__| | | |/ __/ _ \\| '_  |\n| | | | | |  | |_| | (__| (_) | | | |\n|_| |_|_|_|   \\__,_|\\___\\___/|_| |_| \nDebian-based Post Install"
     echo "Welcome to NIRUCON-DLPI - Nicklas Rudolfsson's post-install script of 'My Suckless Setup' for Debian-based distributions."
     echo "This is tailored for MY own needs (focus on noir theming and music and media production). Feel free to use and modify, but I disclaim all responsibility; proceed at your own risk!"
     echo "Contact: n@rudolfsson.net"
-    echo "Script version: 2024-08-01.02"
+    echo "Script version: 2024-08-02.01"
     echo ""
 }
 
@@ -59,26 +58,87 @@ install_packages() {
         xorg xinit xrandr xsetroot fonts-noto fonts-noto-color-emoji playerctl
         qt6ct breeze-icon-theme pcmanfm arandr nitrogen picom openssh-client cmus scrot gnupg
         pass brightnessctl mpv dunst unzip nano alsa-utils pavucontrol xarchiver xclip htop curl
-        libnotify-bin jq bc
+        libnotify-bin jq bc build-essential libx11-dev libxft-dev libxinerama-dev libfreetype6-dev
     )
 
     echo "Installing essential packages via apt..."
     sudo apt-get install -y "${packages[@]}"
 }
 
+# Function: Install Brave browser from official repository
+install_brave_browser() {
+    sudo apt install -y apt-transport-https curl
+    sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+    echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg] https://brave-browser-apt-release.s3.brave.com/ stable main" | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
+    sudo apt update
+    sudo apt install -y brave-browser
+}
+
+# Function: Install Spotify from official repository
+install_spotify() {
+    curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | sudo apt-key add -
+    echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+    sudo apt-get update
+    sudo apt-get install -y spotify-client
+}
+
+# Function: Install Nextcloud client from official repository
+install_nextcloud_client() {
+    sudo apt-get install -y software-properties-common
+    sudo add-apt-repository ppa:nextcloud-devs/client
+    sudo apt-get update
+    sudo apt-get install -y nextcloud-desktop
+}
+
+# Function: Install Reaper from official website
+install_reaper() {
+    wget -O ~/Downloads/reaper.tar.xz http://www.reaper.fm/files/6.x/reaper_linux_x86_64.tar.xz
+    tar -xvf ~/Downloads/reaper.tar.xz -C ~/Downloads
+    sudo ~/Downloads/reaper_linux_x86_64/install-reaper.sh
+    rm -rf ~/Downloads/reaper*
+}
+
+# Function: Install latest qpwgraph from GitHub
+install_qpwgraph() {
+    sudo apt-get install -y build-essential libpipewire-0.3-dev qtbase5-dev cmake
+    rm -rf ~/Git/qpwgraph
+    git clone https://github.com/rdunst/qpwgraph.git ~/Git/qpwgraph
+    cd ~/Git/qpwgraph
+    mkdir build
+    cd build
+    cmake ..
+    make
+    sudo make install
+}
+
+# Function: Install latest yabridge and yabridgectl from GitHub
+install_yabridge() {
+    sudo apt-get install -y wine-stable
+    wget -O ~/Downloads/yabridge.tar.gz https://github.com/robbert-vdh/yabridge/releases/latest/download/yabridge-x86_64-linux-gnu.tar.gz
+    tar -xzf ~/Downloads/yabridge.tar.gz -C ~/Downloads
+    sudo ~/Downloads/yabridge-x86_64-linux-gnu/install-yabridge.sh
+    rm -rf ~/Downloads/yabridge*
+}
+
+# Function: Install LV2 and VST3 plugins from official repositories
+install_daw_plugins() {
+    sudo apt-get install -y lv2-dev
+    wget -O ~/Downloads/vst3sdk.tar.gz https://download.steinberg.net/sdk_downloads/vst3sdk-3.7.4_build-197.zip
+    unzip ~/Downloads/vst3sdk.tar.gz -d ~/Downloads
+    sudo mv ~/Downloads/VST_SDK/VST3_SDK /usr/local/vst3sdk
+    rm -rf ~/Downloads/vst3sdk*
+}
+
 # Function: Install optional packages based on user choice
 install_optional() {
     local prompt="$1"
-    local packages=("${!2}")
+    local function_name="$2"
 
     read -p "$prompt [Y/n]: " install_response
     install_response="${install_response,,}" # Convert to lowercase
 
     if [[ "$install_response" == "y" ]] || [[ -z "$install_response" ]]; then
-        if [ ${#packages[@]} -ne 0 ]; then
-            echo "Installing packages via apt: ${packages[@]}"
-            sudo apt-get install -y "${packages[@]}"
-        fi
+        $function_name
     else
         echo "Skipping installation for this option."
     fi
@@ -318,20 +378,13 @@ main() {
 
     install_packages
 
-    local browser_packages=(brave-browser)
-    install_optional "Do you want to install Brave browser?" browser_packages[@]
-
-    local music_streaming_packages=(spotify-client)
-    install_optional "Do you want to install Spotify?" music_streaming_packages[@]
-
-    local nextcloud_sync_packages=(nextcloud-desktop)
-    install_optional "Do you want to install Nextcloud client?" nextcloud_sync_packages[@]
-
-    local daw_apps_packages=(reaper qpwgraph yabridge yabridgectl)
-    install_optional "Do you want to install DAW apps (reaper qpwgraph yabridge yabridgectl)?" daw_apps_packages[@]
-
-    local daw_plugins_packages=(lv2 vst3)
-    install_optional "Do you want to install DAW plugins (lots of lv2 and vst plugins)?" daw_plugins_packages[@]
+    install_optional "Do you want to install Brave browser?" install_brave_browser
+    install_optional "Do you want to install Spotify?" install_spotify
+    install_optional "Do you want to install Nextcloud client?" install_nextcloud_client
+    install_optional "Do you want to install Reaper?" install_reaper
+    install_optional "Do you want to install the latest qpwgraph?" install_qpwgraph
+    install_optional "Do you want to install the latest yabridge and yabridgectl?" install_yabridge
+    install_optional "Do you want to install DAW plugins?" install_daw_plugins
 
     local web_dev_packages=(filezilla bluefish)
     install_optional "Do you want to install Web development apps (bluefish filezilla)?" web_dev_packages[@]
