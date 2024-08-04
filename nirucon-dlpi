@@ -63,7 +63,7 @@ install_core_suckless() {
 
     # Update package list and install core dependencies
     sudo apt update
-    sudo apt install -y build-essential xorg xserver-xorg libx11-dev libxft-dev libxinerama-dev libxcb1-dev libxinerama-dev gcc make \
+    sudo apt install -y build-essential xorg xserver-xorg libx11-dev libxft-dev libxinerama-dev libxcb1-dev libxinerama-dev libxrandr-dev gcc make \
         nano unzip wget nitrogen picom alsa-utils cmus mpd libnotify-bin xautolock \
         xbacklight curl dunst pamixer playerctl jq rofi fastfetch fonts-font-awesome fonts-mononoki
     
