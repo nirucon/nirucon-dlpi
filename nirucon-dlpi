@@ -1,9 +1,17 @@
 #!/bin/bash
 
-# Debian-based Post Install script by Nicklas Rudolfsson
-# https://github.com/nirucon
-# The script is made for my own needs but is free to use and modify
-# Focus of the script: suckless dwm setup, dmenu scripts, noir theming, music and content creation applications + some extra stuff
+# Nirucon-DLPI: Post Install script for Debian Linux
+# Version: 2024-08-04 (Ensure you have the latest version!)
+# Author: Nicklas Rudolfsson
+# GitHub: https://github.com/nirucon
+# Email: n@rudolfsson.net
+# License: Feel free to use and modify. Donations are welcome :) https://www.paypal.com/paypalme/nicklasrudolfsson
+# Disclaimer and Warning:
+# 1. I do not take any responsibility for this script or any changes/problems it might cause on your system!
+# 2. I am not a professional programmer, hacker, or tech expert. I am an old n00b who uses Linux as my daily driver and sometimes enjoys tinkering with my setup to make it easier for myself.
+# 3. Consider this script a work in progress. But there is a risk that it may not be improved or updated at all, and I cannot offer any guarantees.
+# Dependencies: If not listed here - YOU are responsible to look in the script.
+# Related scripts: https://github.com/nirucon/nirucon-linux-postinstall (main script)
 
 # Function: Check for internet connection
 check_internet_connection() {
@@ -11,488 +19,263 @@ check_internet_connection() {
         echo -e "\e[32mInternet connection: OK\e[0m"
     else
         echo -e "\e[31mInternet connection: DOWN\e[0m"
-        echo "This script requires an active internet connection. Please resolve the issue and run the script again."
+        echo -e "\e[31mThis script requires an active internet connection. Please resolve the issue and run the script again.\e[0m"
         exit 1
     fi
 }
 
 # Function: Display welcome message
 display_welcome() {
-    echo "Welcome to NIRUCON-DLPI - Nicklas Rudolfsson's post-install script of 'My Suckless Setup' for Debian-based distributions."
-    echo "This is tailored for MY own needs (focus on noir theming and music and media production). Feel free to use and modify, but I disclaim all responsibility; proceed at your own risk!"
-    echo "Contact: n@rudolfsson.net"
-    echo "Script version: 2024-08-02.01"
-    echo ""
+    clear
+    echo -e "\e[1;34mWelcome to the Nirucon-DLPI Post Install script for Debian Linux\e[0m"
+    echo -e "\e[1;31mDisclaimer: Use at your own risk. The author does not have any responsibility at all for this script and changes on your system!\e[0m"
+    echo "--------------------------------------------------------------------------"
 }
 
 # Function: Prompt confirmation to proceed
 confirm_proceed() {
-    read -p "Are you sure you want to continue with the installation? [Y/n]: " confirm_install
-    if [[ "$confirm_install" != [Nn]* ]]; then
-        echo "Proceeding with installation..."
-    else
-        echo "Installation aborted."
+    read -p "Are you sure you want to continue with the post installation on your Debian Linux? [Y/n]: " confirm_install
+    confirm_install="${confirm_install,,}" # Convert to lowercase
+    if [[ "$confirm_install" == "n" ]]; then
+        echo -e "\e[31mInstallation aborted.\e[0m"
         exit 0
     fi
+    echo "Proceeding with installation..."
 }
 
-# Function: Install necessary packages if not already installed
-install_if_needed() {
-    if ! command -v "$1" &>/dev/null; then
-        echo "Installing $1..."
-        sudo apt-get install -y "$1"
-    else
-        echo "$1 is already installed"
-    fi
-}
+# Function: Install repos
+install_repos() {
+    echo "Adding testing repository for rolling release..."
 
-# Function: Optimize system settings
-optimize_system_conf() {
-    sudo apt-get update
-    sudo apt-get upgrade -y
-}
+    # Add testing repository
+    echo "deb http://deb.debian.org/debian/ testing main contrib non-free" | sudo tee /etc/apt/sources.list.d/testing.list
 
-# Function: Install essential packages via apt
-install_packages() {
-    local packages=(
-        xorg xinit x11-xserver-utils fonts-noto fonts-noto-color-emoji playerctl
-        qt6ct breeze-icon-theme pcmanfm arandr nitrogen picom openssh-client cmus scrot gnupg
-        pass brightnessctl mpv dunst unzip nano alsa-utils pavucontrol xarchiver xclip htop curl
-        libnotify-bin jq bc build-essential libx11-dev libxinerama-dev libxft-dev libfreetype6-dev libpam0g-dev libxext-dev fonts-font-awesome xbacklight curl playerctl
-    )
-
-    echo "Installing essential packages via apt..."
-    sudo apt-get install -y "${packages[@]}"
-}
-
-# Function: Install Brave browser from official repository
-install_brave_browser() {
-    sudo apt install -y apt-transport-https curl
-    sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
-    echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg] https://brave-browser-apt-release.s3.brave.com/ stable main" | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
+    # Update package list and upgrade
     sudo apt update
-    sudo apt install -y brave-browser
+    sudo apt upgrade -y
+
+    echo -e "\e[32mTesting repository and tools installed successfully.\e[0m"
 }
 
-# Function: Install Spotify from official repository
-install_spotify() {
-    curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | sudo apt-key add -
-    echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
-    sudo apt-get update
-    sudo apt-get install -y spotify-client
+# Function: Install core dependencies for suckless (dwm, st, dmenu, slock), minimal Xorg setup and essential packages
+install_core_suckless() {
+    echo "Installing core dependencies for suckless, minimal Xorg setup and some essential packages..."
+
+    # Update package list and install core dependencies
+    sudo apt update
+    sudo apt install -y build-essential libx11-dev libxft-dev libxinerama-dev \
+        libxrandr-dev libimlib2-dev libfreetype6-dev libfontconfig1-dev xorg \
+        xfonts-base x11-xserver-utils xinit nano unzip wget nitrogen picom alsa-utils \
+        cmus mpd wpasupplicant network-manager calcurse xbacklight connman curl dunst \
+        pamixer playerctl jq rofi fastfetch
+    
+    echo -e "\e[32mCore dependencies for suckless, minimal Xorg setup, and essential packages installed!\e[0m"
 }
 
-# Function: Install Nextcloud client from official repository
-install_nextcloud_client() {
-    sudo apt-get install -y software-properties-common
-    sudo add-apt-repository ppa:nextcloud-devs/client
-    sudo apt-get update
-    sudo apt-get install -y nextcloud-desktop
-}
-
-# Function: Install Reaper from official website
-install_reaper() {
-    wget -O ~/Downloads/reaper.tar.xz http://www.reaper.fm/files/6.x/reaper_linux_x86_64.tar.xz
-    tar -xvf ~/Downloads/reaper.tar.xz -C ~/Downloads
-    sudo ~/Downloads/reaper_linux_x86_64/install-reaper.sh
-    rm -rf ~/Downloads/reaper*
-}
-
-# Function: Install latest qpwgraph from GitHub
-install_qpwgraph() {
-    sudo apt-get install -y build-essential libpipewire-0.3-dev qtbase5-dev cmake
-    rm -rf ~/Git/qpwgraph
-    git clone https://github.com/rdunst/qpwgraph.git ~/Git/qpwgraph
-    cd ~/Git/qpwgraph
-    mkdir build
-    cd build
-    cmake ..
-    make
-    sudo make install
-}
-
-# Function: Install latest yabridge and yabridgectl from GitHub
-install_yabridge() {
-    sudo apt-get install -y wine-stable
-    wget -O ~/Downloads/yabridge.tar.gz https://github.com/robbert-vdh/yabridge/releases/latest/download/yabridge-x86_64-linux-gnu.tar.gz
-    tar -xzf ~/Downloads/yabridge.tar.gz -C ~/Downloads
-    sudo ~/Downloads/yabridge-x86_64-linux-gnu/install-yabridge.sh
-    rm -rf ~/Downloads/yabridge*
-}
-
-# Function: Install LV2 and VST3 plugins from official repositories
-install_daw_plugins() {
-    sudo apt-get install -y lv2-dev
-    wget -O ~/Downloads/vst3sdk.tar.gz https://download.steinberg.net/sdk_downloads/vst3sdk-3.7.4_build-197.zip
-    unzip ~/Downloads/vst3sdk.tar.gz -d ~/Downloads
-    sudo mv ~/Downloads/VST_SDK/VST3_SDK /usr/local/vst3sdk
-    rm -rf ~/Downloads/vst3sdk*
-}
-
-# Function: Install optional packages based on user choice
-install_optional() {
-    local prompt="$1"
-    local function_name="$2"
-
-    read -p "$prompt [Y/n]: " install_response
-    install_response="${install_response,,}" # Convert to lowercase
-
-    if [[ "$install_response" == "y" ]] || [[ -z "$install_response" ]]; then
-        $function_name
-    else
-        echo "Skipping installation for this option."
-    fi
-}
-
-# Function: Clone and install nirucon-suckless and related files, scripts and dot files
+# Function: Clone and install nirucon-suckless and related files, scripts, and dot files
 install_suckless() {
-    read -p "Do you want to install suckless dwm, dmenu, st, slock and related configurations, dotfiles and some dmenu scripts? [Y/n]: " choice
-    if [[ "$choice" == [Yy]* ]] || [[ -z "$choice" ]]; then
-        echo "Installing Suckless utilities and configurations..."
-        mkdir -p ~/Git && git clone https://github.com/nirucon/nirucon-suckless ~/Git/nirucon-suckless
-        mkdir -p ~/.config/suckless ~/.dwm ~/Music ~/Downloads ~/Pictures ~/Videos ~/Temp ~/.config/dunst
+    echo "Installing nirucon-suckless, configurations and scripts..."
+    mkdir -p ~/Git && git clone https://github.com/nirucon/nirucon-suckless ~/Git/nirucon-suckless
+    mkdir -p ~/.config/suckless ~/.dwm ~/Music ~/Downloads ~/Pictures ~/Videos ~/Temp ~/.config/dunst
 
-        declare -a repos=("nirubar-dwm-deb" "dunstrc" "nirucon-dmenu" "sverigesradio-dmenu" "srpod-dmenu" "srplay-dmenu" "dwmexit-dmenu" "havamal" "wifi-dmenu" "system-optimizer-dmenu")
-        for repo in "${repos[@]}"; do
-            rm -rf ~/Git/$repo
-            git clone https://github.com/nirucon/$repo ~/Git/$repo
-        done
+    declare -a repos=("nirubar-dwm-debian" "dunstrc" "srplay-dmenu" "dwmexit-dmenu" "havamal")
+    for repo in "${repos[@]}"; do
+        rm -rf ~/Git/$repo
+        git clone https://github.com/nirucon/$repo ~/Git/$repo
+    done
 
-        cp -rf ~/Git/nirubar-dwm-deb/ ~/Git/nirucon-suckless/dmenu ~/Git/nirucon-suckless/st ~/Git/nirucon-suckless/slock ~/Git/nirucon-suckless/dwm ~/.config/suckless
-        cp -rf ~/Git/dunstrc/* ~/.config/dunst
-        cp -fr ~/Git/nirucon-suckless/nirucon-greeter ~/.config/
+    cp -rf ~/Git/nirubar-dwm-debian/ ~/Git/nirucon-suckless/dmenu ~/Git/nirucon-suckless/st ~/Git/nirucon-suckless/slock ~/Git/nirucon-suckless/dwm ~/.config/suckless
+    cp -rf ~/Git/dunstrc/* ~/.config/dunst
+    cp -fr ~/Git/nirucon-suckless/nirucon-greeter ~/.config/
+    sudo cp -fr ~/Git/nirucon-suckless/fonts/* /usr/share/fonts/
 
-        declare -a suckless_dirs=("dwm" "dmenu" "slock" "st")
-        for dir in "${suckless_dirs[@]}"; do
-            sudo make -C ~/.config/suckless/$dir clean install
-        done
+    declare -a suckless_dirs=("dwm" "dmenu" "slock" "st")
+    for dir in "${suckless_dirs[@]}"; do
+        sudo make -C ~/.config/suckless/$dir clean install
+    done
 
-        cp -f ~/Git/nirucon-suckless/.xinitrc ~/
-        cp -f ~/Git/nirucon-suckless/autostart.sh ~/.dwm
-        cp -f ~/Git/nirucon-suckless/.bashrc ~/
-        cp -f ~/Git/nirucon-suckless/.bash_aliases_debian ~/
-        cp -rf ~/Git/nirucon-suckless/nirucon-wallpapers ~/Pictures/
-        sudo cp -f ~/Git/nirucon-suckless/issue /etc/
-        chmod +x ~/.dwm/autostart.sh ~/.config/suckless/nirubar-dwm-deb/nirubar-dwm-deb ~/.config/nirucon-greeter/greeter
+    cp -f ~/Git/nirucon-suckless/.xinitrc ~/
+    cp -f ~/Git/nirucon-suckless/autostart.sh ~/.dwm
+    cp -f ~/Git/nirucon-suckless/.bashrc ~/
+    cp -f ~/Git/nirucon-suckless/.bash_aliases_debian ~/
+    cp -rf ~/Git/nirucon-suckless/nirucon-wallpapers ~/Pictures/
+    sudo cp -f ~/Git/nirucon-suckless/issue /etc/
+    chmod +x ~/.dwm/autostart.sh ~/.config/suckless/nirubar-dwm-debian/nirubar-dwm-debian ~/.config/nirucon-greeter/greeter
 
-        # Insert nirubar-dwm in .xinitrc
-        line_to_insert="~/.config/suckless/nirubar-dwm-deb/nirubar-dwm-deb &"
-        comment_line="# Start nirubar-dwm-*"
-        if [[ -f ~/.xinitrc ]]; then
-          sed -i "/$comment_line/a $line_to_insert" ~/.xinitrc
-          echo "Line inserted successfully."
-        else
-          echo "~/.xinitrc not found. Please ensure you have the file in your home directory."
-        fi
-
-        # nirucon-dmenu - dmenu scripts launcher
-        echo "Cloning and installing the 'nirucon-dmenu' script..."
-        rm -rf ~/Git/nirucon-dmenu
-        git clone https://github.com/nirucon/nirucon-dmenu ~/Git/nirucon-dmenu
-        sudo cp -f ~/Git/nirucon-dmenu/nirucon-dmenu-scripts-launcher /usr/local/bin/
-        sudo chmod +x /usr/local/bin/nirucon-dmenu-scripts-launcher
-        rm -rf ~/Git/nirucon-dmenu
-
-        # sverigesradio-dmenu - dmenu script for sveriges radio
-        echo "Cloning and installing the 'sverigesradio-dmenu' script..."
-        rm -rf ~/Git/sverigesradio-dmenu
-        git clone https://github.com/nirucon/sverigesradio-dmenu ~/Git/sverigesradio-dmenu
-        sudo cp -f ~/Git/sverigesradio-dmenu/sverigesradio-dmenu /usr/local/bin/
-        sudo chmod +x /usr/local/bin/sverigesradio-dmenu
-        rm -rf ~/Git/sverigesradio-dmenu
-
-        # srpod-dmenu - dmenu script for sr play pod
-        echo "Cloning and installing the 'srpod-dmenu' script..."
-        rm -rf ~/Git/srpod-dmenu
-        git clone https://github.com/nirucon/srpod-dmenu ~/Git/srpod-dmenu
-        sudo cp -f ~/Git/srpod-dmenu/srpod-dmenu /usr/local/bin/
-        sudo chmod +x /usr/local/bin/srpod-dmenu
-        rm -rf ~/Git/srpod-dmenu
-
-        # srplay-dmenu - dmenu script for sr play podcasts and radio
-        echo "Cloning and installing the 'srplay-dmenu' script..."
-        rm -rf ~/Git/srplay-dmenu
-        git clone https://github.com/nirucon/srplay-dmenu ~/Git/srplay-dmenu
-        sudo cp -f ~/Git/srplay-dmenu/srplay-dmenu /usr/local/bin/
-        sudo chmod +x /usr/local/bin/srplay-dmenu
-        rm -rf ~/Git/srplay-dmenu
-
-        # dwmexit-dmenu - dmenu script for suspend, logout, restart, reboot
-        echo "Installing dwmexit-dmenu script..."
-        rm -rf ~/Git/dwmexit-dmenu
-        git clone https://github.com/nirucon/dwmexit-dmenu ~/Git/dwmexit-dmenu
-        sudo cp -f ~/Git/dwmexit-dmenu/dwmexit-dmenu /usr/local/bin/
-        sudo chmod +x /usr/local/bin/dwmexit-dmenu
-        rm -rf ~/Git/dwmexit-dmenu
-
-        # havamal - script for random quotes in .bashrc
-        echo "Installing havamal script..."
-        rm -rf ~/Git/havamal
-        git clone https://github.com/nirucon/havamal ~/Git/havamal
-        mkdir -p ~/.config/havamal
-        cp -fr ~/Git/havamal/* ~/.config/havamal/
-        chmod +x ~/.config/havamal/havamal
-        rm -rf ~/Git/havamal
-        echo "The 'havamal' script has been installed and the repository has been removed."
-
-        # wifi-dmenu - script for wifi in dmenu
-        echo "Installing wifi-dmenu script..."
-        rm -rf ~/Git/wifi-dmenu
-        git clone https://github.com/nirucon/wifi-dmenu ~/Git/wifi-dmenu
-        sudo cp -f ~/Git/wifi-dmenu/wifi-dmenu /usr/local/bin/
-        sudo chmod +x /usr/local/bin/wifi-dmenu
-        rm -rf ~/Git/wifi-dmenu
-
-        # system-optimizer-dmenu - script for optimizing system in dmenu
-        echo "Installing system-optimizer-dmenu script..."
-        rm -rf ~/Git/system-optimizer-dmenu
-        git clone https://github.com/nirucon/system-optimizer-dmenu ~/Git/system-optimizer-dmenu
-        sudo cp -f ~/Git/system-optimizer-dmenu/system-optimizer-dmenu /usr/local/bin/
-        sudo chmod +x /usr/local/bin/system-optimizer-dmenu
-        rm -rf ~/Git/system-optimizer-dmenu
-
-        echo "Suckless utilities and configurations installed successfully."
+    # Insert nirubar-dwm in .xinitrc
+    line_to_insert="~/.config/suckless/nirubar-dwm-debian/nirubar-dwm-debian &"
+    comment_line="# Start nirubar-dwm-*"
+    if [[ -f ~/.xinitrc ]]; then
+        sed -i "/$comment_line/a $line_to_insert" ~/.xinitrc
+        echo -e "\e[32mLine inserted successfully.\e[0m"
     else
-        echo "Skipping Suckless utilities installation."
-    fi
-}
-
-# Function: Install custom GRUB theme
-install_grub_theme() {
-    read -p "Do you want to install a custom grub theme - nirucon-death? [Y/n]: " grub_response
-    grub_response=${grub_response,,}
-
-    if [[ "$grub_response" =~ ^(yes|y| ) ]] || [[ -z "$grub_response" ]]; then
-        echo "Installing custom grub theme..."
-        git clone https://github.com/nirucon/nirucon-death-grubtheme ~/Git/nirucon-death-grubtheme
-        sudo mkdir -p /boot/grub/themes
-        sudo cp -r ~/Git/nirucon-death-grubtheme/nirucon-death /boot/grub/themes/nirucon-death
-        sudo sed -i 's|^#GRUB_THEME=.*|GRUB_THEME="/boot/grub/themes/nirucon-death/theme.txt"|' /etc/default/grub
-        sudo update-grub
-        echo "Custom grub theme installed."
-    else
-        echo "Skipping custom grub theme installation."
-    fi
-}
-
-# Function: Install Graphite GTK Theme (Dark), Tela Circle Icons (Black) and nirucon Rofi Custom Theme
-install_themes_icons() {
-    read -r -p "Do you want to install the GTK theme and icons? [Y/n]: " gtk_response
-    gtk_response=${gtk_response,,}
-    read -r -p "Do you want to install the Rofi custom theme? [Y/n]: " rofi_response
-    rofi_response=${rofi_response,,}
-
-    if [[ "$gtk_response" =~ ^(yes|y| ) ]] || [[ -z "$gtk_response" ]]; then
-        echo "Installing Graphite GTK theme (Dark)..."
-        git clone https://github.com/vinceliuice/Graphite-gtk-theme
-        if [ -d "Graphite-gtk-theme" ]; then
-            cd Graphite-gtk-theme
-            sudo ./install.sh -d /usr/share/themes -c dark
-            cd ..
-            rm -rf Graphite-gtk-theme
-        else
-            echo "Failed to clone Graphite GTK theme repository. Please check your internet connection."
-            exit 1
-        fi
-
-        echo "Installing Tela Circle icon theme (Black)..."
-        git clone https://github.com/vinceliuice/Tela-circle-icon-theme
-        if [ -d "Tela-circle-icon-theme" ]; then
-            cd Tela-circle-icon-theme
-            sudo ./install.sh -a
-            cd ..
-            rm -rf Tela-circle-icon-theme
-        else
-            echo "Failed to clone Tela Circle icon theme repository. Please check your internet connection."
-            exit 1
-        fi
-
-        # Ensure the themes and icons are correctly set in the configuration files
-        echo "Ensuring themes and icons are correctly set in the configuration files..."
-
-        mkdir -p ~/.config/gtk-3.0/
-        mkdir -p ~/.config/gtk-4.0/
-
-        # GTK2 settings
-        echo 'gtk-theme-name="Graphite-Dark"' > ~/.gtkrc-2.0
-        echo 'gtk-icon-theme-name="Tela-circle-black"' >> ~/.gtkrc-2.0
-
-        # GTK3 settings
-        cat <<EOF > ~/.config/gtk-3.0/settings.ini
-[Settings]
-gtk-theme-name=Graphite-Dark
-gtk-icon-theme-name=Tela-circle-black
-EOF
-
-        # GTK4 settings
-        cat <<EOF > ~/.config/gtk-4.0/settings.ini
-[Settings]
-gtk-theme-name=Graphite-Dark
-gtk-icon-theme-name=Tela-circle-black
-EOF
-
-        # Insert environment variables into .xinitrc
-        if ! grep -q 'export GTK_THEME="Graphite-Dark"' ~/.xinitrc; then
-            sed -i '/# Set default GTK and Icon themes/a \
-export GTK_THEME="Graphite-Dark" \
-export GTK_ICON_THEME="Tela-circle-black" \
-export GTK2_RC_FILES="$HOME/.gtkrc-2.0" \
-export GTK3_SETTINGS="$HOME/.config/gtk-3.0/settings.ini" \
-export GTK4_SETTINGS="$HOME/.config/gtk-4.0/settings.ini"' ~/.xinitrc
-        fi
-
-        echo "Theme set to Graphite-Dark and icon theme set to Tela-circle-black."
-    else
-        echo "Skipping GTK theme and icons installation."
+        echo -e "\e[31m~/.xinitrc not found. Please ensure you have the file in your home directory.\e[0m"
     fi
 
-    if [[ "$rofi_response" =~ ^(yes|y| ) ]] || [[ -z "$rofi_response" ]]; then
-        echo "Installing and setting the Rofi custom theme..."
-        sudo mkdir -p /usr/share/rofi/themes
-        mkdir -p ~/.config/rofi
+    # srplay-dmenu - dmenu script for SR play podcasts and radio
+    echo "Cloning and installing the 'srplay-dmenu' script..."
+    rm -rf ~/Git/srplay-dmenu
+    git clone https://github.com/nirucon/srplay-dmenu ~/Git/srplay-dmenu
+    sudo cp -f ~/Git/srplay-dmenu/srplay-dmenu /usr/local/bin/
+    sudo chmod +x /usr/local/bin/srplay-dmenu
+    rm -rf ~/Git/srplay-dmenu
 
-        wget -O /tmp/nirucon.rasi https://raw.githubusercontent.com/nirucon/nirucon-rofi/master/nirucon.rasi
-        if [ $? -eq 0 ]; then
-            sudo mv -f /tmp/nirucon.rasi /usr/share/rofi/themes/
-        else
-            echo "Failed to download Rofi theme. Please check the URL or your internet connection."
-            exit 1
-        fi
+    # dwmexit-dmenu - dmenu script for suspend, logout, restart, reboot
+    # placeholder
 
-        wget -O /tmp/config.rasi https://raw.githubusercontent.com/nirucon/nirucon-rofi/master/config.rasi
-        if [ $? -eq 0 ]; then
-            mv -f /tmp/config.rasi ~/.config/rofi/config.rasi
-        else
-            echo "Failed to download default Rofi configuration. Please check the URL or your internet connection."
-            exit 1
-        fi
-    else
-        echo "Skipping Rofi custom theme installation."
-    fi
+    # havamal - script for random quotes in .bashrc
+    echo "Installing havamal script..."
+    rm -rf ~/Git/havamal
+    git clone https://github.com/nirucon/havamal ~/Git/havamal
+    mkdir -p ~/.config/havamal
+    cp -fr ~/Git/havamal/* ~/.config/havamal/
+    chmod +x ~/.config/havamal/havamal
+    rm -rf ~/Git/havamal
+    echo -e "\e[32mThe 'havamal' script has been installed and the repository has been removed.\e[0m"
+
+    echo -e "\e[32mNirucon-suckless, configurations and scripts installed successfully.\e[0m"
 }
 
-# Final additions
-echo "Now some final installations, we are soon done..."
-
-# Function: Check if a command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
+# Function: Check if a package is installed
+is_installed() {
+    dpkg -l | grep -qw "$1"
+    return $?
 }
 
-# Function: Install Fastfetch
-install_fastfetch() {
-    # Check if Fastfetch is already installed
-    if command_exists fastfetch; then
-        echo "Fastfetch is already installed."
+# Function: Install optional packages
+install_optional_packages() {
+    declare -a packages=("firefox" "surf" "thunderbird" "bluefish" "filezilla" "gimp" "obs-studio" "kdenlive")
+    declare -a not_installed_packages=()
+    declare -a selected_packages=()
+    declare package_choice
+
+    echo "Optional Packages Installation"
+    echo "Checking for already installed packages..."
+
+    for package in "${packages[@]}"; do
+        if ! is_installed "$package"; then
+            not_installed_packages+=("$package")
+        fi
+    done
+
+    if [[ ${#not_installed_packages[@]} -eq 0 ]]; then
+        echo "All optional packages are already installed."
         return
     fi
 
-    # Print info
-    echo "Cloning and installing fastfetch..."
+    echo "Please answer with [Y]yes / [n]no (Yes is default if pressing enter) for each package."
 
-    # Install dependencies
-    sudo apt-get update
-    sudo apt-get install -y cmake gcc pkg-config
+    for package in "${not_installed_packages[@]}"; do
+        read -p "Do you want to install $package? [Y/n]: " package_choice
+        package_choice="${package_choice,,}" # Convert to lowercase
+        if [[ "$package_choice" =~ ^(yes|y| ) ]] || [[ -z "$package_choice" ]]; then
+            selected_packages+=("$package")
+        fi
+    done
 
-    # Clone Fastfetch repository
-    git clone https://github.com/fastfetch-cli/fastfetch.git
-    cd fastfetch
-
-    # Build and install Fastfetch
-    mkdir -p build
-    cd build
-    cmake ..
-    cmake --build . --target fastfetch
-    sudo cmake --install . --prefix /usr/local
-
-    # Cleanup
-    cd ../..
-    rm -rf fastfetch
-
-    echo "Fastfetch installed successfully!"
-}
-
-# Function: Install Mononoki Nerd Font
-install_mononoki() {
-    # Check if Mononoki Nerd Font is already installed
-    if fc-list | grep -i mononoki >/dev/null 2>&1; then
-        echo "Mononoki Nerd Font is already installed."
+    if [[ ${#selected_packages[@]} -eq 0 ]]; then
+        echo -e "\e[31mNo optional packages selected for installation.\e[0m"
         return
     fi
 
-    # Print info
-    echo "Installing mononoki font..."
+    echo "These packages will be installed:"
+    for package in "${selected_packages[@]}"; do
+        echo "- $package"
+    done
 
-    # Install fontconfig if not already installed
-    sudo apt-get update
-    sudo apt-get install -y fontconfig unzip
-
-    # Create the fonts directory if it doesn't exist
-    mkdir -p ~/.local/share/fonts
-
-    # Navigate to the fonts directory
-    cd ~/.local/share/fonts
-
-    # Download the Mononoki Nerd Font zip file
-    wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.3.3/Mononoki.zip
-
-    # Unzip the downloaded font file
-    unzip Mononoki.zip
-
-    # Remove the zip file after extraction
-    rm Mononoki.zip
-
-    # Update the font cache
-    fc-cache -fv
-
-    # Print a success message
-    echo "Mononoki Nerd Font installed successfully!"
+    while true; do
+        read -p "Are you sure you want to install all these? [Y]yes / [n]no / [c]choose again: " final_choice
+        final_choice="${final_choice,,}" # Convert to lowercase
+        if [[ "$final_choice" =~ ^(yes|y| ) ]] || [[ -z "$final_choice" ]]; then
+            sudo apt install -y "${selected_packages[@]}"
+            echo -e "\e[32mSelected packages installed.\e[0m"
+            break
+        elif [[ "$final_choice" == "no" || "$final_choice" == "n" ]]; then
+            echo -e "\e[31mInstallation of optional packages aborted.\e[0m"
+            break
+        elif [[ "$final_choice" == "choose" || "$final_choice" == "c" ]]; then
+            install_optional_packages
+            break
+        else
+            echo -e "\e[31mInvalid choice. Please select [Y]yes / [n]no / [c]choose again.\e[0m"
+        fi
+    done
 }
 
-# Main function to execute the script
+# Function: Install and set the Rofi custom theme
+install_rofi_theme() {
+    echo "Installing and setting the Rofi custom theme..."
+    
+    sudo mkdir -p /usr/share/rofi/themes
+    mkdir -p ~/.config/rofi
+
+    wget -O /tmp/nirucon.rasi https://raw.githubusercontent.com/nirucon/nirucon-rofi/master/nirucon.rasi
+    if [ $? -eq 0 ]; then
+        sudo mv -f /tmp/nirucon.rasi /usr/share/rofi/themes/
+    else
+        echo -e "\e[31mFailed to download Rofi theme. Please check the URL or your internet connection.\e[0m"
+        exit 1
+    fi
+
+    wget -O /tmp/config.rasi https://raw.githubusercontent.com/nirucon/nirucon-rofi/master/config.rasi
+    if [ $? -eq 0 ]; then
+        mv -f /tmp/config.rasi ~/.config/rofi/config.rasi
+    else
+        echo -e "\e[31mFailed to download default Rofi configuration. Please check the URL or your internet connection.\e[0m"
+        exit 1
+    fi
+
+    echo -e "\e[32mRofi theme and configuration installed successfully.\e[0m"
+}
+
+# Function: Clone and install cmus themes
+install_cmus_theme() {
+    echo "Cloning and installing nirucon cmus themes..."
+    
+    # Create necessary directory
+    mkdir -p ~/.config/cmus
+
+    # Clone the repository
+    git clone https://github.com/nirucon/nirucon-cmus-themes /tmp/nirucon-cmus-themes
+    
+    # Check if cloning was successful
+    if [ $? -eq 0 ]; then
+        # Copy theme files and rc file to ~/.config/cmus
+        cp /tmp/nirucon-cmus-themes/*.theme ~/.config/cmus/
+        cp /tmp/nirucon-cmus-themes/rc ~/.config/cmus/
+
+        # Remove the temporary cloned repository
+        rm -rf /tmp/nirucon-cmus-themes
+
+        echo -e "\e[32mCMUS themes and configuration installed successfully.\e[0m"
+    else
+        echo -e "\e[31mFailed to clone CMUS themes repository. Please check the URL or your internet connection.\e[0m"
+        exit 1
+    fi
+}
+
+# Function: Prompt for reboot
+prompt_reboot() {
+    read -p "Nirucon-DLPI is now installed. Start with: startx, but it's highly recommended to reboot. Do you want to reboot now? [Y/n]: " reboot_choice
+    reboot_choice="${reboot_choice,,}"
+    if [[ "$reboot_choice" =~ ^(yes|y| ) ]] || [[ -z "$reboot_choice" ]]; then
+        sudo reboot
+    fi
+}
+
+# Main function
 main() {
-    check_internet_connection
     display_welcome
+    check_internet_connection
     confirm_proceed
-
-    install_if_needed "git"
-    install_if_needed "wget"
-    sudo apt-get install -y build-essential
-
-    read -p "Do you want to optimize and update the system before installing additional applications? [Y/n]: " optimize_choice
-    if [[ "$optimize_choice" != [Nn]* ]]; then
-        optimize_system_conf
-    fi
-
-    install_packages
-
-    install_optional "Do you want to install Brave browser?" install_brave_browser
-    install_optional "Do you want to install Spotify?" install_spotify
-    install_optional "Do you want to install Nextcloud client?" install_nextcloud_client
-    install_optional "Do you want to install Reaper?" install_reaper
-    install_optional "Do you want to install the latest qpwgraph?" install_qpwgraph
-    install_optional "Do you want to install the latest yabridge and yabridgectl?" install_yabridge
-    install_optional "Do you want to install DAW plugins?" install_daw_plugins
-
-    local web_dev_packages=(filezilla bluefish)
-    install_optional "Do you want to install Web development apps (bluefish filezilla)?" web_dev_packages[@]
-
-    local image_video_packages=(obs-studio kdenlive gimp)
-    install_optional "Do you want to install Image and Video editing apps (obs-studio kdenlive gimp)?" image_video_packages[@]
-
-    local communication_packages=(thunderbird irssi signal-desktop)
-    install_optional "Do you want to install Communication apps (thunderbird irssi signal-desktop)?" communication_packages[@]
-
+    install_repos
+    install_core_suckless
     install_suckless
-    install_grub_theme
-    install_themes_icons
-    install_fastfetch
-    install_mononoki
-
-    echo "Cleaning up temporary files..."
-    rm -fr ~/Git/dunstrc ~/Git/nirubar-dwm-deb ~/Git/nirucon-suckless ~/Git/nirucon-death-grubtheme
-    echo "NIRUCON-DLPI Debian-based Post Install script completed - NOW BE CREATIVE!"
-    echo "Start nirucon-suckless with the command: startx"
+    install_optional_packages
+    install_rofi_theme
+    install_cmus_theme
+    prompt_reboot
 }
 
+# Run the main function
 main
