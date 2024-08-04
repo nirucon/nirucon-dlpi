@@ -63,10 +63,9 @@ install_core_suckless() {
 
     # Update package list and install core dependencies
     sudo apt update
-    sudo apt install -y build-essential libx11-dev libxft-dev libxinerama-dev \
-        libxrandr-dev libimlib2-dev libfreetype6-dev libfontconfig1-dev xorg \
-        xfonts-base x11-xserver-utils xinit nano unzip wget nitrogen picom alsa-utils \
-        cmus mpd wpasupplicant network-manager calcurse xbacklight connman curl dunst \
+    sudo apt install -y build-essential xorg xserver-xorg libx11-dev libxft-dev libxinerama-dev libxcb1-dev libxinerama-dev gcc make \
+        nano unzip wget nitrogen picom alsa-utils cmus mpd \
+        wpasupplicant network-manager calcurse xbacklight connman curl dunst \
         pamixer playerctl jq rofi fastfetch
     
     echo -e "\e[32mCore dependencies for suckless, minimal Xorg setup, and essential packages installed!\e[0m"
