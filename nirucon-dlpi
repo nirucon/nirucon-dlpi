@@ -66,7 +66,7 @@ install_core_suckless() {
     sudo apt install -y build-essential xorg xserver-xorg libx11-dev libxft-dev libxinerama-dev libxcb1-dev libxinerama-dev gcc make \
         nano unzip wget nitrogen picom alsa-utils cmus mpd \
         wpasupplicant network-manager calcurse xbacklight connman curl dunst \
-        pamixer playerctl jq rofi fastfetch
+        pamixer playerctl jq rofi fastfetch fonts-font-awesome fonts-mononoki
     
     echo -e "\e[32mCore dependencies for suckless, minimal Xorg setup, and essential packages installed!\e[0m"
 }
