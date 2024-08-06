@@ -76,7 +76,7 @@ install_suckless() {
     mkdir -p ~/Git && git clone https://github.com/nirucon/nirucon-suckless ~/Git/nirucon-suckless
     mkdir -p ~/.config/suckless ~/.dwm ~/Music ~/Downloads ~/Pictures ~/Videos ~/Temp ~/.config/dunst
 
-    declare -a repos=("nirubar-dwm-deb" "dunstrc" "srplay-dmenu" "dwmexit-dmenu" "havamal")
+    declare -a repos=("nirubar-dwm-deb" "dunstrc" "srplay-dmenu" "dwmexit-dmenu" "havamal" "nirucon-suckless-modscript")
     for repo in "${repos[@]}"; do
         rm -rf ~/Git/$repo
         git clone https://github.com/nirucon/$repo ~/Git/$repo
@@ -85,6 +85,7 @@ install_suckless() {
     cp -rf ~/Git/nirubar-dwm-deb/ ~/Git/nirucon-suckless/dmenu ~/Git/nirucon-suckless/st ~/Git/nirucon-suckless/slock ~/Git/nirucon-suckless/dwm ~/Git/nirucon-suckless/dwm_systray ~/.config/suckless
     cp -rf ~/Git/dunstrc/* ~/.config/dunst
     cp -fr ~/Git/nirucon-suckless/nirucon-greeter ~/.config/
+    cp -fr ~/Git/nirucon-suckless-modscript/*sh ~/Scripts
     sudo cp -fr ~/Git/nirucon-suckless/fonts/* /usr/share/fonts/
 
     declare -a suckless_dirs=("dwm" "dmenu" "slock" "st")
